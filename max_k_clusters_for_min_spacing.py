@@ -235,9 +235,9 @@ class Union_Find(object):
 def generate_codes_1_unit_away(code):
     codes_1_unit_away = []
     for i, num in enumerate(code):
-        array = list(code)
-        array[i] = '0' if num == '1' else '1'
-        gen_code = ''.join(array)
+        a = list(code)
+        a[i] = '0' if num == '1' else '1'
+        gen_code = ''.join(a)
         codes_1_unit_away.append(gen_code)
     return codes_1_unit_away
 
@@ -247,10 +247,16 @@ def generate_codes_1_unit_away(code):
 def generate_codes_2_units_away(code):
     codes_2_units_away = []
     for i, num in enumerate(code):
-        array = list(code)
-        # array[i] = '0' if num == '1' else '1'
-        gen_code = ''.join(array)
-        codes_2_units_away.append(gen_code)
+        a = list(code)
+        a[i] = '0' if num == '1' else '1'
+        changed_i = i
+        mod_code = ''.join(a)
+        for j, second_num in enumerate(mod_code):
+            b = list(mod_code)
+            if j != changed_i:
+                b[j] = '0' if second_num == '1' else '1'
+                gen_code = ''.join(b)
+                codes_2_units_away.append(gen_code)
     return codes_2_units_away
 
 
