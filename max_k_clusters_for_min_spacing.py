@@ -66,131 +66,6 @@ We are now left with clusters that are at least 3 units apart.
 import time
 
 
-# Vertex class for undirected graphs
-class Vertex():
-    def __init__(self, key):
-        self._key = key
-        self._nbrs = {}
-
-    def __str__(self):
-        return '{' + "'key': {}, 'nbrs': {}".format(
-            self._key,
-            self._nbrs
-        ) + '}'
-
-    def add_nbr(self, nbr_key, weight=1):
-        if (nbr_key):
-            self._nbrs[nbr_key] = weight
-
-    def has_nbr(self, nbr_key):
-        return nbr_key in self._nbrs
-
-    def get_nbr_keys(self):
-        return self._nbrs.keys()
-
-    def get_nbr_values(self):
-        return self._nbrs.values()
-
-    def remove_nbr(self, nbr_key):
-        if nbr_key in self._nbrs:
-            del self._nbrs[nbr_key]
-
-    def get_e(self, nbr_key):
-        if nbr_key in self._nbrs:
-            return self._nbrs[nbr_key]
-
-
-# Undirected graph class
-class Graph():
-    def __init__(self):
-        self._vertices = {}
-
-    # 'x in graph' will use this containment logic
-    def __contains__(self, key):
-        return key in self._vertices
-
-    # 'for x in graph' will use this iter() definition, where x is a vertex in an array
-    def __iter__(self):
-        return iter(self._vertices.values())
-
-    def __str__(self):
-        output = '\n{\n'
-        vertices = self._vertices.values()
-        for v in vertices:
-            graph_key = "{}".format(v._key)
-            v_str = "\n   'key': {}, \n   'nbrs': {}".format(
-                v._key,
-                v._nbrs
-            )
-            output += ' ' + graph_key + ': {' + v_str + '\n },\n'
-        return output + '}'
-
-    def add_v(self, v):
-        if v:
-            self._vertices[v._key] = v
-        return self
-
-    def get_v(self, key):
-        try:
-            return self._vertices[key]
-        except KeyError:
-            return None
-
-    def get_v_keys(self):
-        return list(self._vertices.keys())
-
-    # removes vertex as neighbor from all its neighbors, then deletes vertex
-    def remove_v(self, key):
-        if key in self._vertices:
-            nbr_keys = self._vertices[key].get_nbr_keys()
-            for nbr_key in nbr_keys:
-                self.remove_e(nbr_key, key)
-            del self._vertices[key]
-
-    def add_e(self, from_key, to_key, weight=1):
-        if from_key not in self._vertices:
-            self.add_v(Vertex(from_key))
-        if to_key not in self._vertices:
-            self.add_v(Vertex(to_key))
-
-        self._vertices[from_key].add_nbr(to_key, weight)
-        self._vertices[to_key].add_nbr(from_key, weight)
-
-    def get_e(self, from_key, to_key):
-        if from_key and to_key in self._vertices:
-            return self.get_v(from_key).get_e(to_key)
-
-    # adds the weight for an edge if it exists already, with a default of 1
-    def increase_e(self, from_key, to_key, weight=1):
-        if from_key not in self._vertices:
-            self.add_v(Vertex(from_key))
-        if to_key not in self._vertices:
-            self.add_v(Vertex(to_key))
-
-        weight_u_v = self.get_v(from_key).get_e(to_key)
-        new_weight_u_v = weight_u_v + weight if weight_u_v else weight
-
-        weight_v_u = self.get_v(to_key).get_e(from_key)
-        new_weight_v_u = weight_v_u + weight if weight_v_u else weight
-
-        self._vertices[from_key].add_nbr(to_key, new_weight_u_v)
-        self._vertices[to_key].add_nbr(from_key, new_weight_v_u)
-
-    def has_e(self, from_key, to_key):
-        if from_key in self._vertices:
-            return self._vertices[from_key].has_nbr(to_key)
-
-    def remove_e(self, from_key, to_key):
-        if from_key in self._vertices:
-            self._vertices[from_key].remove_nbr(to_key)
-        if to_key in self._vertices:
-            self._vertices[to_key].remove_nbr(from_key)
-
-    def for_each_v(self, cb):
-        for v in self._vertices:
-            cb(v)
-
-
 # Union-Find array data structure
 class Union_Find(object):
     def __init__(self, n):
@@ -217,6 +92,9 @@ class Union_Find(object):
     def union(self, u, v):
         u_root = self.root(u)
         v_root = self.root(v)
+        if u_root == v_root:
+            return
+
         u_cluster_size = self._cluster_sizes[u - 1]
         v_cluster_size = self._cluster_sizes[v - 1]
         new_cluster_size = u_cluster_size + v_cluster_size
@@ -233,19 +111,19 @@ class Union_Find(object):
 # input: code (string) with n length
 # output: an array containing "n choose 1" codes (strings) 1 unit away from input code
 def generate_codes_1_unit_away(code):
-    codes_1_unit_away = []
+    codes_1_unit_away = {}
     for i, num in enumerate(code):
         a = list(code)
         a[i] = '0' if num == '1' else '1'
         gen_code = ''.join(a)
-        codes_1_unit_away.append(gen_code)
-    return codes_1_unit_away
+        codes_1_unit_away[gen_code] = 1
+    return list(codes_1_unit_away.keys())
 
 
 # input: code (string) with n length
 # output: an array containing "n choose 2" codes (strings) 2 units away from input code
 def generate_codes_2_units_away(code):
-    codes_2_units_away = []
+    codes_2_units_away = {}
     for i, num in enumerate(code):
         a = list(code)
         a[i] = '0' if num == '1' else '1'
@@ -256,8 +134,20 @@ def generate_codes_2_units_away(code):
             if j != changed_i:
                 b[j] = '0' if second_num == '1' else '1'
                 gen_code = ''.join(b)
-                codes_2_units_away.append(gen_code)
-    return codes_2_units_away
+                codes_2_units_away[gen_code] = 1
+    return list(codes_2_units_away.keys())
+
+
+# input: filename
+# output: hash with codes as keys and an array of vertices with that code as values
+def populate_code_v_hash(filename):
+    code_v_hash = {}
+    with open(filename) as f_handle:
+        f_handle.readline()
+        for i, line in enumerate(f_handle):
+            code = line.replace(' ', '').strip()
+            code_v_hash.setdefault(code, []).append(i + 1)
+    return code_v_hash
 
 
 # input: filename, min_spacing "permissibl"e" for k clustering (as we have better, more defined
@@ -265,37 +155,31 @@ def generate_codes_2_units_away(code):
 # output: max num of clusters possible to get at least desired min_spacing provided, i.e. so that
 # all pairs of nodes with <=min_spacing-1 different bits fall into the same clusters
 def max_k_clusters_for_min_spacing(filename, min_spacing):
+    code_v_hash = populate_code_v_hash(filename)
     with open(filename) as f_handle:
-        info = f_handle.readline().split()
-        num_nodes = int(info[0])
-        bits_per_node = int(info[1])
-        print('num of nodes, bits per node: ', num_nodes, bits_per_node)
+        num_nodes = int(f_handle.readline().split()[0])
 
-        code_v_hash = {}
         union_find = Union_Find(num_nodes)
-        T = Graph()
-        for index, line in enumerate(f_handle):
+        hamming_distances = []
+        for i, line in enumerate(f_handle):
+            current_v = i + 1
             code = line.replace(' ', '').strip()
-            code_v_hash[code] = index + 1
-
             codes_1_unit_away = generate_codes_1_unit_away(code)
-            for nbr_code in codes_1_unit_away:
-                T.add_e(code, nbr_code)
-                union_find.union(code, nbr_code)
-
             codes_2_units_away = generate_codes_2_units_away(code)
-            for nbr_2_code in codes_2_units_away:
-                T.add_e(code, nbr_2_code)
-                union_find.union(code, nbr_2_code)
+            hamming_distances = [code] + codes_1_unit_away + codes_2_units_away
+            for h_code in hamming_distances:
+                vertices_with_h_code = code_v_hash[h_code] if h_code in code_v_hash else []
+                for v in vertices_with_h_code:
+                    if v != current_v:
+                        union_find.union(current_v, v)
 
-        print('code_v_hash: ', code_v_hash)
-    return None
+    return union_find.get_num_clusters()
 
 
 def main():
     start = time.time()
     # expected example result: 2
-    result = max_k_clusters_for_min_spacing('max_k_clusters_for_min_spacing_ex.txt', 3)
+    result = max_k_clusters_for_min_spacing('max_k_clusters_for_min_spacing.txt', 3)
     print('result: ', result)
     print('elapsed time: ', time.time() - start)
 
